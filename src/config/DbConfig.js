@@ -26,6 +26,10 @@ require("dotenv").config();
 const { HOST, PORT, USER, PASSWORD, DATABASE, DIALECT } = process.env;
 module.exports = {
     db:{
-        host : HOST
+        host : HOST,
+        user : USER,
+        password: PASSWORD,
+        database :DATABASE,
+        dialect : DIALECT
     }
 }
