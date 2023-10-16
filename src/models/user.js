@@ -1,4 +1,6 @@
-module.exports = (sequelize, DataTypes) => {
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = require("../config/DbConfig")
+
   const User = sequelize.define("user", {
 
     id: {
@@ -21,5 +23,5 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  return User;
-};
+  module.exports = User;
+
