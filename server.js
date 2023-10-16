@@ -6,7 +6,7 @@ require("dotenv").config()
 const PORT = process.env.SERVERPORT || 6000
 
 
-// const database = require("./src/config/DbConfig")
+require("./src/config/DbConfig")
 // const db = require("./src/models/user")
 
 const userRoute = require("./src/routes/userRoutes")

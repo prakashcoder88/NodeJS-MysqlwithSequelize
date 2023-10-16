@@ -7,7 +7,7 @@ const User = require("../models/user");
 
 exports.Register = async (req, res) => {
   try {
-    const { id,username, email, phone, password } = req.body;
+    const { username, email, phone, password } = req.body;
 
     if (!username || !email || !phone) {
       return res.status(400).json({
@@ -38,7 +38,7 @@ exports.Register = async (req, res) => {
 
         const newuser = await User.create({
           username,
-          id,
+     
           email,
           phone,
           password: hashedPassword,
