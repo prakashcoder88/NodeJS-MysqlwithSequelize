@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require ("bcrypt")
 const {StatusCodes} = require("http-status-codes")
 const db = require("../models/user")
-const User = db.user
+const user = db.user
 
 exports.Register = async (req, res) => {
     try {
@@ -14,12 +14,14 @@ exports.Register = async (req, res) => {
           status: StatusCodes.BAD_REQUEST,
           message: "MessageRespons.required",
         });
-      } else if (!validatePassword(password)) {
-        return res.status(400).json({
-          status: StatusCodes.BAD_REQUEST,
-          message: "MessageRespons.passwordvalidate",
-        });
-      } else {
+      } 
+      // else if (!validatePassword(password)) {
+      //   return res.status(400).json({
+      //     status: StatusCodes.BAD_REQUEST,
+      //     message: "MessageRespons.passwordvalidate",
+      //   });
+      // } 
+      else {
         const checkemail = await db.findOne({ email });
         const checkphone = await db.findOne({ phone });
   
@@ -35,7 +37,7 @@ exports.Register = async (req, res) => {
         } else {
 
   
-          password = await passwordencrypt(password);
+          // password = await passwordencrypt(password);
 
           let user = new db({
             username,

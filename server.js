@@ -6,8 +6,9 @@ require("dotenv").config()
 const PORT = process.env.SERVERPORT || 6000
 
 
-const database = require("./src/config/DbConfig")
+// const database = require("./src/config/DbConfig")
 const db = require("./src/models/user")
+// db.sequelize.sync()
 const userRoute = require("./src/routes/userRoutes")
 
 
