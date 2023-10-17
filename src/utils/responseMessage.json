@@ -1,0 +1,9 @@
+
+{
+    "REQUIRED":"Required fields are missing.",
+    "EMAILEXITS":"Email is already in use.",
+    "PHONEEXITS":"Phone number is already in use.",
+    "VALIDATEPASS": "Password contain only Number, alphanumeric & special characters.",
+    "CREATE":"Successfully registered",
+    "INTERNAL_SERVER_ERROR": "Internal server error"
+}

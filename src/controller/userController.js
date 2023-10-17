@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const responsemessage = require("../utils/responseMessage.json")
 const {
   passwordencrypt,
   validatePassword,
@@ -16,7 +17,7 @@ exports.SignUp = async (req, res) => {
     if (!name || !email || !phone || !password) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: "Required fields are missing.",
+        message: responsemessage.REQUIRED,
       });
     }
 
@@ -25,8 +26,8 @@ exports.SignUp = async (req, res) => {
 
     if (checkEmail || checkPhone) {
       const message = checkEmail
-        ? "Email is already in use."
-        : "Phone number is already in use.";
+        ? responsemessage.EMAILEXITS
+        : responsemessage.PHONEEXITS;
       res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
         message,
@@ -35,12 +36,13 @@ exports.SignUp = async (req, res) => {
       if (!validatePassword(password)) {
         return res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
-          message: "responsemessage.VALIDATEPASS",
+          message: responsemessage.VALIDATEPASS,
         });
       } else {
         const hashpassword = await passwordencrypt(password);
 
         const user = await User.create({
+          username,
           name,
           email,
           phone,
@@ -49,7 +51,7 @@ exports.SignUp = async (req, res) => {
 
         return res.status(201).json({
           status: StatusCodes.CREATED,
-          message: "Successfully registered",
+          message: responsemessage.CREATED,
           UserData: user,
         });
       }
@@ -58,7 +60,7 @@ exports.SignUp = async (req, res) => {
     console.error(error);
     return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: "Internal server error",
+      message: responsemessage.INTERNAL_SERVER_ERROR,
     });
   }
 };

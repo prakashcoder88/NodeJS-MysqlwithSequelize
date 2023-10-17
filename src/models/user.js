@@ -11,6 +11,9 @@ const User = sequelize.define("user", {
     type: Sequelize.STRING,
     allowNull: false,
   },
+  username:{
+    type:Sequelize.STRING
+  },
   email: {
     type: Sequelize.STRING,
     allowNull: false,
@@ -21,8 +24,9 @@ const User = sequelize.define("user", {
     allowNull: false,
     unique: true,
   },
+
   password: {
-    type: DataTypes.STRING,
+    type: Sequelize.STRING,
   },
 
   createdAt: Sequelize.DATE,
@@ -30,6 +34,6 @@ const User = sequelize.define("user", {
 });
 
 // User.sync()
-// User.sync({force:true})
+User.sync({alter: true})
 
 module.exports = User;
