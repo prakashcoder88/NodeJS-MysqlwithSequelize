@@ -121,3 +121,29 @@ exports.SignIn = async (req, res) => {
     });
   }
 };
+
+exports.userFind = async(req, res) =>{
+    try {
+        const userId = req.currentuser;
+
+        const user = await User.findOne({userId})
+        
+        if(!user){
+            return res.status(401).json({
+                status:StatusCodes.UNAUTHORIZED,
+                message:responsemessage.UNAUTHORIZED
+            })
+        }else {
+            return res.status(200).json({
+                status:StatusCodes.OK,
+                message:"user details found",
+                user
+            })
+        }
+    } catch (error) {
+        return res.status(500).json({
+            status: StatusCodes.INTERNAL_SERVER_ERROR,
+            message: responsemessage.INTERNAL_SERVER_ERROR,
+          });
+    }
+}
