@@ -5,6 +5,7 @@ const Userdata = require("../controller/userController");
 
 
 router.post("/signup", Userdata.SignUp)
+router.post("/signin", Userdata.SignIn)
 
 
 module.exports = router
