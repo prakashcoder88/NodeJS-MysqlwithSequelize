@@ -3,7 +3,8 @@ const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize('productbase', 'root', 'sa@123', {
     host: 'localhost',
-    dialect: 'mysql' 
+    dialect: 'mysql',
+  
   })
 
   try {
@@ -12,3 +13,5 @@ const sequelize = new Sequelize('productbase', 'root', 'sa@123', {
   } catch (error) {
     console.error('Unable to connect to the database:', error);
   }
+
+  module.exports = sequelize;
