@@ -3,29 +3,32 @@ const sequelize = require("../config/Db.Config");
 
 const User = sequelize.define("user", {
   id: {
-    type: Sequelize.INTEGER,
+    type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
   name: {
-    type: Sequelize.STRING,
+    type: DataTypes.STRING,
   },
   username: {
-    type: Sequelize.STRING,
+    type: DataTypes.STRING,
   },
   email: {
-    type: Sequelize.STRING,
+    type: DataTypes.STRING,
   },
   phone: {
-    type: Sequelize.STRING,
+    type: DataTypes.STRING,
   },
 
   password: {
-    type: Sequelize.STRING,
+    type: DataTypes.STRING,
+  },
+  isActive:{
+    type:DataTypes.TINYINT
   },
 
-  createdAt: Sequelize.DATE,
-  updatedAt: Sequelize.DATE,
+  createdAt: DataTypes.DATE,
+  updatedAt: DataTypes.DATE,
 });
 
 // User.sync()
