@@ -13,5 +13,18 @@ async function passwordencrypt(password) {
     return pattern.test(password);
   }
 
+  function referralCode(length){
+    let code = "";
+    const CHARACTER_SET =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  
+    const CHARACTER_SETLENGTH = CHARACTER_SET.length
+    let CHARACTER = 0
+    while(CHARACTER < length){
+        code += CHARACTER_SET.charAt(Math.floor(Math.random() * CHARACTER_SETLENGTH));
+        CHARACTER += 1;
+    } 
+    return code;
+}
 
-  module.exports = { passwordencrypt, validatePassword };
+  module.exports = { referralCode, passwordencrypt, validatePassword };

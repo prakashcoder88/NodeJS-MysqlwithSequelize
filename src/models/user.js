@@ -19,14 +19,25 @@ const User = sequelize.define("user", {
   phone: {
     type: DataTypes.STRING,
   },
+  referralCode: {
+    type: DataTypes.STRING,
+    require: false,
+  },
+  referrer: {
+    type: DataTypes.STRING,
+    defaultValue: null,
+  },
+  referrerby: {
+    type: DataTypes.STRING,
+    require: false,
+  },
 
   password: {
     type: DataTypes.STRING,
   },
-  isActive:{
-    type:DataTypes.TINYINT,
-    defaultValue: '1'
-
+  isActive: {
+    type: DataTypes.TINYINT,
+    defaultValue: "1",
   },
 
   createdAt: DataTypes.DATE,

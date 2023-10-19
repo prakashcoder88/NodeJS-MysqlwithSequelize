@@ -1,6 +1,94 @@
+// const User = require("../models/user");
+// const responsemessage = require("../utils/responseMessage.json");
+// const {
+//   referralCode,
+//   passwordencrypt,
+//   validatePassword,
+// } = require("../services/commonServices");
+// const genratejwt = require("../utils/jwt");
+// const { StatusCodes } = require("http-status-codes");
+// const bcrypt = require("bcrypt");
+// const { Sequelize } = require("sequelize");
+
+// exports.SignUp = async (req, res) => {
+//   try {
+//     const { name, email, phone, password, referrer } = req.body;
+
+//     username =
+//       name.replace(/\s/g, "").toLowerCase() +
+//       Math.floor(Math.random().toFixed(2) * 100);
+
+//     if (!name || !email || !phone || !password || !referrer) {
+//       return res.status(400).json({
+//         status: StatusCodes.BAD_REQUEST,
+//         message: responsemessage.REQUIRED,
+//       });
+//     }
+
+//     const checkEmail = await User.findOne({ where: { email } });
+//     const checkPhone = await User.findOne({ where: { phone } });
+
+//     if (checkEmail || checkPhone) {
+//       const message = checkEmail
+//         ? responsemessage.EMAILEXITS
+//         : responsemessage.PHONEEXITS;
+//       res.status(400).json({
+//         status: StatusCodes.BAD_REQUEST,
+//         message,
+//       });
+//     } else {
+//       let referrer =await User.findOne({
+//         referralCode = User.referrer
+//       })
+//       if (!referrer) {
+//         return res.status(400).send({
+//           error: true,
+//           message: "Invalid referral code.",
+//         });
+//       }
+//       let referrerId;
+//       referrerId = referrer._id;
+
+//       if (!validatePassword(password)) {
+//         return res.status(400).json({
+//           status: StatusCodes.BAD_REQUEST,
+//           message: responsemessage.VALIDATEPASS,
+//         });
+//       } else {
+//         const hashpassword = await passwordencrypt(password);
+//         // referralCode = referralCode(8)
+
+//         const user = await User.create({
+//           username,
+//           name,
+//           email,
+//           phone,
+//           referrer,
+//           referralCode:referralCode(8),
+//           referrerby:referrerId,
+//           password: hashpassword,
+//         });
+
+//         return res.status(201).json({
+//           status: StatusCodes.CREATED,
+//           message: responsemessage.CREATED,
+//           UserData: user,
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       status: StatusCodes.INTERNAL_SERVER_ERROR,
+//       message: responsemessage.INTERNAL_SERVER_ERROR,
+//     });
+//   }
+// };
+
 const User = require("../models/user");
 const responsemessage = require("../utils/responseMessage.json");
 const {
+  referralCode,
   passwordencrypt,
   validatePassword,
 } = require("../services/commonServices");
@@ -9,16 +97,15 @@ const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
 const { Sequelize } = require("sequelize");
 
-
 exports.SignUp = async (req, res) => {
   try {
-    const { name, email, phone, password } = req.body;
+    const { name, email, phone, password, referrer } = req.body;
 
-    username =
+    const username =
       name.replace(/\s/g, "").toLowerCase() +
       Math.floor(Math.random().toFixed(2) * 100);
 
-    if (!name || !email || !phone || !password) {
+    if (!name || !email || !phone || !password || !referrer) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
         message: responsemessage.REQUIRED,
@@ -30,33 +117,46 @@ exports.SignUp = async (req, res) => {
 
     if (checkEmail || checkPhone) {
       const message = checkEmail
-        ? responsemessage.EMAILEXITS
-        : responsemessage.PHONEEXITS;
-      res.status(400).json({
+        ? responsemessage.EMAILEXISTS
+        : responsemessage.PHONEEXISTS;
+      return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
         message,
       });
     } else {
+      const referrerUser = await User.findOne({
+        where: { referralCode: referrer },
+      });
+      if (!referrerUser) {
+        return res.status(400).json({
+          status: StatusCodes.BAD_REQUEST,
+          message: "Invalid referral code.",
+        });
+      }
+      const referrerId = referrerUser.id;
+
       if (!validatePassword(password)) {
         return res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
           message: responsemessage.VALIDATEPASS,
         });
       } else {
-        const hashpassword = await passwordencrypt(password);
-
-        const user = await User.create({
+        const hashPassword = await passwordencrypt(password);
+        const newUser = await User.create({
           username,
           name,
           email,
           phone,
-          password: hashpassword,
+          referrer,
+          referralCode: referralCode(8),
+          referrerby: referrerId,
+          password: hashPassword,
         });
 
         return res.status(201).json({
           status: StatusCodes.CREATED,
           message: responsemessage.CREATED,
-          UserData: user,
+          UserData: newUser,
         });
       }
     }
@@ -135,7 +235,7 @@ exports.userFind = async (req, res) => {
   try {
     const userId = req.currentuser;
 
-    const user = await User.findOne({where:{id:userId }});
+    const user = await User.findOne({ where: { id: userId } });
 
     if (!user) {
       return res.status(401).json({
@@ -157,38 +257,83 @@ exports.userFind = async (req, res) => {
   }
 };
 
-exports.userUpdate = async (req, res) =>{
+exports.userUpdate = async (req, res) => {
   try {
-    const {email, phone} =req.body
-  } catch (error) {
-    
-  }
+    const { email, phone } = req.body;
 
-}
-exports.SoftDelete = async(req,res) =>{
-  try {
-    // const userId = req.currentuser
+    const useremail = email ? email.toLowerCase() : undefined;
 
-const user = await User.findOne({where:{id:req.currentuser}})
+    let checkemail = await User.findOne({
+      email,
+      _id: { $ne: req.currentuser },
+    });
+    let checkphone = await User.findOne({
+      phone,
+      _id: { $ne: req.currentuser },
+    });
 
-if(!user){
-  return res.status(400).json({
-    status:StatusCodes.BAD_REQUEST,
-    message:responsemessage.NOTFOUND
-  })
-}else{
-  user.isActive = true
-  await user.save()
-}
-return res.status(200).json({
-  status:StatusCodes.OK,
-  message: responsemessage.DELETE
-})
+    if (checkemail || checkphone) {
+      const message = checkemail
+        ? responsemessage.EMAILEXITS
+        : responsemessage.PHONEEXITS;
 
+      res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message,
+      });
+    } else {
+      let user = await User.findByID({ id: req.currentUser });
+      if (!user) {
+        return res.status(400).json({
+          status: StatusCodes.BAD_REQUEST,
+          message: responsemessage.NOTFOUND,
+        });
+      } else {
+        let user = {
+          email: useremail,
+          phone,
+        };
+        const userUpdate = await User.findByIdAndUpdate(
+          { id: req.currentUser },
+          { $set: user },
+          { new: true }
+        );
+        res.status(200).json({
+          status: StatusCodes.OK,
+          message: "User details update",
+        });
+      }
+    }
   } catch (error) {
     return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responsemessage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
+exports.SoftDelete = async (req, res) => {
+  try {
+    // const userId = req.currentuser
+
+    const user = await User.findOne({ where: { id: req.currentuser } });
+
+    if (!user) {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: responsemessage.NOTFOUND,
+      });
+    } else {
+      user.isActive = true;
+      await user.save();
+    }
+    return res.status(200).json({
+      status: StatusCodes.OK,
+      message: responsemessage.DELETE,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responsemessage.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
