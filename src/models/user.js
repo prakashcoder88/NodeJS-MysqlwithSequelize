@@ -24,7 +24,9 @@ const User = sequelize.define("user", {
     type: DataTypes.STRING,
   },
   isActive:{
-    type:DataTypes.TINYINT
+    type:DataTypes.TINYINT,
+    defaultValue: '1'
+
   },
 
   createdAt: DataTypes.DATE,

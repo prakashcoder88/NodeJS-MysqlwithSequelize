@@ -8,5 +8,8 @@
     "INTERNAL_SERVER_ERROR": "Internal server error",
     "UNAUTHORIZED":"Invalied user details",
     "TOKENNOTCREATE": "Couldn't create access token. Please try again later",
-    "LOGINSUCCESS":"User logged in successfully"
+    "LOGINSUCCESS":"User logged in successfully",
+    "ISACTIVE": "You must verify your account and get activate your account",
+    "NOTFOUND":"User not found",
+    "DELETE":"User successfully delete"
 }

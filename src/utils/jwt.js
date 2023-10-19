@@ -7,9 +7,9 @@ const options = {
   expiresIn: "24h",
 };
 
-async function genratejwt({ id,username }) {
+async function genratejwt({ id }) {
   try {
-    const payload = { id,username };
+    const payload = { id };
     const token = await jwt.sign(payload, KEY_TOKEN, options);
 
     return { error: false, token };
