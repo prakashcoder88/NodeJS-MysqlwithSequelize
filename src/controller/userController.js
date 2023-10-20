@@ -313,7 +313,7 @@ exports.userUpdate = async (req, res) => {
 };
 exports.SoftDelete = async (req, res) => {
   try {
-    // const userId = req.currentuser
+
 
     const user = await User.findOne({ where: { id: req.currentuser } });
 
