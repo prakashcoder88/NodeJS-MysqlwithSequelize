@@ -1,24 +1,24 @@
-// const User = require("../models/user");
-// const responsemessage = require("../utils/responseMessage.json");
-// const {
-//   referralCode,
-//   passwordencrypt,
-//   validatePassword,
-// } = require("../services/commonServices");
-// const genratejwt = require("../utils/jwt");
-// const { StatusCodes } = require("http-status-codes");
-// const bcrypt = require("bcrypt");
-// const { Sequelize } = require("sequelize");
+const User = require("../models/user");
+const responsemessage = require("../utils/responseMessage.json");
+const {
+  referralCode,
+  passwordencrypt,
+  validatePassword,
+} = require("../services/commonServices");
+const genratejwt = require("../utils/jwt");
+const { StatusCodes } = require("http-status-codes");
+const bcrypt = require("bcrypt");
+const { Sequelize, Op } = require("sequelize");
 
 // exports.SignUp = async (req, res) => {
 //   try {
 //     const { name, email, phone, password, referrer } = req.body;
 
-//     username =
+//     const username =
 //       name.replace(/\s/g, "").toLowerCase() +
 //       Math.floor(Math.random().toFixed(2) * 100);
 
-//     if (!name || !email || !phone || !password || !referrer) {
+//     if (!name && !email && !phone && !password && !referrer) {
 //       return res.status(400).json({
 //         status: StatusCodes.BAD_REQUEST,
 //         message: responsemessage.REQUIRED,
@@ -28,26 +28,25 @@
 //     const checkEmail = await User.findOne({ where: { email } });
 //     const checkPhone = await User.findOne({ where: { phone } });
 
-//     if (checkEmail || checkPhone) {
+//     if (checkEmail && checkPhone) {
 //       const message = checkEmail
-//         ? responsemessage.EMAILEXITS
-//         : responsemessage.PHONEEXITS;
-//       res.status(400).json({
+//         ? responsemessage.EMAILEXISTS
+//         : responsemessage.PHONEEXISTS;
+//       return res.status(400).json({
 //         status: StatusCodes.BAD_REQUEST,
 //         message,
 //       });
 //     } else {
-//       let referrer =await User.findOne({
-//         referralCode = User.referrer
-//       })
-//       if (!referrer) {
-//         return res.status(400).send({
-//           error: true,
+//       const referrerUser = await User.findOne({
+//         where: { referralCode: referrer },
+//       });
+//       if (!referrerUser) {
+//         return res.status(400).json({
+//           status: StatusCodes.BAD_REQUEST,
 //           message: "Invalid referral code.",
 //         });
 //       }
-//       let referrerId;
-//       referrerId = referrer._id;
+//       const referrerId = referrerUser.id;
 
 //       if (!validatePassword(password)) {
 //         return res.status(400).json({
@@ -55,24 +54,22 @@
 //           message: responsemessage.VALIDATEPASS,
 //         });
 //       } else {
-//         const hashpassword = await passwordencrypt(password);
-//         // referralCode = referralCode(8)
-
-//         const user = await User.create({
+//         const hashPassword = await passwordencrypt(password);
+//         const newUser = await User.create({
 //           username,
 //           name,
 //           email,
 //           phone,
 //           referrer,
-//           referralCode:referralCode(8),
-//           referrerby:referrerId,
-//           password: hashpassword,
+//           referralCode: referralCode(8),
+//           referrerby: referrerId,
+//           password: hashPassword,
 //         });
 
 //         return res.status(201).json({
 //           status: StatusCodes.CREATED,
 //           message: responsemessage.CREATED,
-//           UserData: user,
+//           UserData: newUser,
 //         });
 //       }
 //     }
@@ -85,90 +82,195 @@
 //   }
 // };
 
-const User = require("../models/user");
-const responsemessage = require("../utils/responseMessage.json");
-const {
-  referralCode,
-  passwordencrypt,
-  validatePassword,
-} = require("../services/commonServices");
-const genratejwt = require("../utils/jwt");
-const { StatusCodes } = require("http-status-codes");
-const bcrypt = require("bcrypt");
-const { Sequelize } = require("sequelize");
+// exports.userUpdate = async (req, res) => {
+//   try {
+//     const { email, phone } = req.body;
 
-exports.SignUp = async (req, res) => {
+//     const useremail = email ? email.toLowerCase() : undefined;
+
+//     let checkemail = await User.findOne({
+//       email,
+//       _id: { $ne: req.currentuser },
+//     });
+//     let checkphone = await User.findOne({
+//       phone,
+//       _id: { $ne: req.currentuser },
+//     });
+
+//     if (checkemail || checkphone) {
+//       const message = checkemail
+//         ? responsemessage.EMAILEXITS
+//         : responsemessage.PHONEEXITS;
+
+//       res.status(400).json({
+//         status: StatusCodes.BAD_REQUEST,
+//         message,
+//       });
+//     } else {
+//       let user = await User.findByID({ id: req.currentUser });
+//       if (!user) {
+//         return res.status(400).json({
+//           status: StatusCodes.BAD_REQUEST,
+//           message: responsemessage.NOTFOUND,
+//         });
+//       } else {
+//         let user = {
+//           email: useremail,
+//           phone,
+//         };
+//         const userUpdate = await User.findByIdAndUpdate(
+//           { id: req.currentUser },
+//           { $set: user },
+//           { new: true }
+//         );
+//         res.status(200).json({
+//           status: StatusCodes.OK,
+//           message: "User details update",
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     return res.status(500).json({
+//       status: StatusCodes.INTERNAL_SERVER_ERROR,
+//       message: responsemessage.INTERNAL_SERVER_ERROR,
+//     });
+//   }
+// };
+
+exports.userSignUpOrUpdate = async (req, res) => {
   try {
-    const { name, email, phone, password, referrer } = req.body;
+    const {
+      id,
+      name,
+      email,
+      phone,
+      password,
+      referrer,
+      email: updateEmail,
+      phone: updatePhone,
+    } = req.body;
 
-    const username =
-      name.replace(/\s/g, "").toLowerCase() +
-      Math.floor(Math.random().toFixed(2) * 100);
+    if (id) {
+      // Update an existing user
+      const user = await User.findByPk(id);
 
-    if (!name || !email || !phone || !password || !referrer) {
-      return res.status(400).json({
-        status: StatusCodes.BAD_REQUEST,
-        message: responsemessage.REQUIRED,
-      });
-    }
-
-    const checkEmail = await User.findOne({ where: { email } });
-    const checkPhone = await User.findOne({ where: { phone } });
-
-    if (checkEmail || checkPhone) {
-      const message = checkEmail
-        ? responsemessage.EMAILEXISTS
-        : responsemessage.PHONEEXISTS;
-      return res.status(400).json({
-        status: StatusCodes.BAD_REQUEST,
-        message,
-      });
-    } else {
-      const referrerUser = await User.findOne({
-        where: { referralCode: referrer },
-      });
-      if (!referrerUser) {
-        return res.status(400).json({
-          status: StatusCodes.BAD_REQUEST,
-          message: "Invalid referral code.",
+      if (!user) {
+        return res.status(404).json({
+          status: StatusCodes.NOT_FOUND,
+          message: "User not found.",
         });
       }
-      const referrerId = referrerUser.id;
 
-      if (!validatePassword(password)) {
+      const updateRequest = Boolean(updateEmail || updatePhone);
+
+      if (updateRequest) {
+        const useremail = updateEmail ? updateEmail.toLowerCase() : undefined;
+
+        const checkemail = await User.findOne({
+          where: {
+            email: useremail,
+            id: { [Op.not]: id },
+          },
+        });
+
+        const checkphone = await User.findOne({
+          where: {
+            phone: updatePhone,
+            id: { [Op.not]: id },
+          },
+        });
+
+        if (checkemail || checkphone) {
+          const message = checkemail
+            ? responsemessage.EMAILEXITS
+            : responsemessage.PHONEEXITS;
+
+          return res.status(400).json({
+            status: StatusCodes.BAD_REQUEST,
+            message,
+          });
+        } else {
+          const userUpdate = {
+            email: useremail,
+            phone: updatePhone,
+          };
+
+          await user.update(userUpdate);
+          return res.status(200).json({
+            status: StatusCodes.OK,
+            message: "User details updated",
+          });
+        }
+      }
+    } else {
+      // Create a new user
+      if (!name || !email || !phone || !password || !referrer) {
         return res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
-          message: responsemessage.VALIDATEPASS,
+          message: responsemessage.REQUIRED,
+        });
+      }
+
+      const checkEmail = await User.findOne({ where: { email } });
+      const checkPhone = await User.findOne({ where: { phone } });
+
+      if (checkEmail || checkPhone) {
+        const message = checkEmail
+          ? responsemessage.EMAILEXITS
+          : responsemessage.PHONEEXITS;
+        return res.status(400).json({
+          status: StatusCodes.BAD_REQUEST,
+          message,
         });
       } else {
-        const hashPassword = await passwordencrypt(password);
-        const newUser = await User.create({
-          username,
-          name,
-          email,
-          phone,
-          referrer,
-          referralCode: referralCode(8),
-          referrerby: referrerId,
-          password: hashPassword,
+        const referrerUser = await User.findOne({
+          where: { referralCode: referrer },
         });
 
-        return res.status(201).json({
-          status: StatusCodes.CREATED,
-          message: responsemessage.CREATED,
-          UserData: newUser,
-        });
+        if (!referrerUser) {
+          return res.status(400).json({
+            status: StatusCodes.BAD_REQUEST,
+            message: "Invalid referral code.",
+          });
+        }
+        const referrerId = referrerUser.id;
+
+        if (!validatePassword(password)) {
+          return res.status(400).json({
+            status: StatusCodes.BAD_REQUEST,
+            message: responsemessage.VALIDATEPASS,
+          });
+        } else {
+          const username =
+            name.replace(/\s/g, "").toLowerCase() +
+            Math.floor(Math.random().toFixed(2) * 100);
+          const hashPassword = await passwordencrypt(password);
+          const newUser = await User.create({
+            username,
+            name,
+            email,
+            phone,
+            referrer,
+            referralCode: referralCode(8),
+            referrerby: referrerId,
+            password: hashPassword,
+          });
+
+          return res.status(201).json({
+            status: StatusCodes.CREATED,
+            message: responsemessage.CREATED,
+            UserData: newUser,
+          });
+        }
       }
     }
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responsemessage.INTERNAL_SERVER_ERROR,
     });
   }
 };
-
 exports.SignIn = async (req, res) => {
   try {
     const { masterfield, password } = req.body;
@@ -231,6 +333,31 @@ exports.SignIn = async (req, res) => {
   }
 };
 
+exports.SoftDelete = async (req, res) => {
+  try {
+    const user = await User.findOne({ where: { id: req.currentuser } });
+
+    if (!user) {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: responsemessage.NOTFOUND,
+      });
+    } else {
+      user.isActive = true;
+      await user.save();
+    }
+    return res.status(200).json({
+      status: StatusCodes.OK,
+      message: responsemessage.DELETE,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responsemessage.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
 exports.userFind = async (req, res) => {
   try {
     const userId = req.currentuser;
@@ -257,83 +384,10 @@ exports.userFind = async (req, res) => {
   }
 };
 
-exports.userUpdate = async (req, res) => {
+exports.changePassword = async(req,res) =>{
   try {
-    const { email, phone } = req.body;
-
-    const useremail = email ? email.toLowerCase() : undefined;
-
-    let checkemail = await User.findOne({
-      email,
-      _id: { $ne: req.currentuser },
-    });
-    let checkphone = await User.findOne({
-      phone,
-      _id: { $ne: req.currentuser },
-    });
-
-    if (checkemail || checkphone) {
-      const message = checkemail
-        ? responsemessage.EMAILEXITS
-        : responsemessage.PHONEEXITS;
-
-      res.status(400).json({
-        status: StatusCodes.BAD_REQUEST,
-        message,
-      });
-    } else {
-      let user = await User.findByID({ id: req.currentUser });
-      if (!user) {
-        return res.status(400).json({
-          status: StatusCodes.BAD_REQUEST,
-          message: responsemessage.NOTFOUND,
-        });
-      } else {
-        let user = {
-          email: useremail,
-          phone,
-        };
-        const userUpdate = await User.findByIdAndUpdate(
-          { id: req.currentUser },
-          { $set: user },
-          { new: true }
-        );
-        res.status(200).json({
-          status: StatusCodes.OK,
-          message: "User details update",
-        });
-      }
-    }
+    
   } catch (error) {
-    return res.status(500).json({
-      status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: responsemessage.INTERNAL_SERVER_ERROR,
-    });
+    
   }
-};
-exports.SoftDelete = async (req, res) => {
-  try {
-
-
-    const user = await User.findOne({ where: { id: req.currentuser } });
-
-    if (!user) {
-      return res.status(400).json({
-        status: StatusCodes.BAD_REQUEST,
-        message: responsemessage.NOTFOUND,
-      });
-    } else {
-      user.isActive = true;
-      await user.save();
-    }
-    return res.status(200).json({
-      status: StatusCodes.OK,
-      message: responsemessage.DELETE,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: responsemessage.INTERNAL_SERVER_ERROR,
-    });
-  }
-};
+}
