@@ -9,7 +9,8 @@ const {UserToken} =require("../middleware/auth")
 router.post("/signin", Userdata.SignIn)
 router.get("/userfind", Userdata.userFind)
 router.patch("/softdelete", UserToken,Userdata.SoftDelete)
-// router.patch("/userupdate", UserToken,Userdata.userUpdate)
+router.post("/changepassword", UserToken,Userdata.changePassword)
+router.post("/resetpassword", UserToken,Userdata.resetPassword)
 
 
 router.post("/userSignUpOrUpdate", Userdata.userSignUpOrUpdate)

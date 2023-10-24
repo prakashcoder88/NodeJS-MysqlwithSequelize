@@ -31,6 +31,12 @@ const User = sequelize.define("user", {
     type: DataTypes.STRING,
     require: false,
   },
+  otp: {
+    type: DataTypes.STRING,
+  },
+  otpExpire:{
+    type:DataTypes.TIME
+  },
 
   password: {
     type: DataTypes.STRING,

@@ -384,10 +384,138 @@ exports.userFind = async (req, res) => {
   }
 };
 
-exports.changePassword = async(req,res) =>{
+exports.changePassword = async (req, res) => {
   try {
-    
+    const userId = req.currentuser;
+
+    // const user = await User.findOne({ where: { id: req.currentuser } });
+    const user = await User.findByPk(userId);
+
+    let { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(403).json({
+        status: StatusCodes.FORBIDDEN,
+        message: "Filed are required",
+      });
+    } else if (!validatePassword(newPassword)) {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: "Password not validate",
+      });
+    } else if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: "New password and Confirm password not match",
+      });
+    } else {
+      const samePassword = await bcrypt.compare(oldPassword, user.password);
+
+      if (!samePassword) {
+        return res.status(400).json({
+          status: StatusCodes.BAD_REQUEST,
+          message: "Old password not match",
+        });
+      } else {
+        const newSamePassword = await bcrypt.compare(
+          newPassword,
+          user.password
+        );
+
+        if (newSamePassword) {
+          return res.status(400).json({
+            status: StatusCodes.BAD_REQUEST,
+            message: "Old password and New Password are same ",
+          });
+        } else {
+          const passwordHash = await passwordencrypt(
+            newPassword,
+            user.password
+          );
+
+          const userUpdate = await user.update({ password: passwordHash });
+
+          return res.status(200).json({
+            status: StatusCodes.OK,
+            message: "Password successfully changed",
+            user: userUpdate,
+          });
+        }
+      }
+    }
   } catch (error) {
-    
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responsemessage.INTERNAL_SERVER_ERROR,
+    });
   }
-}
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newpassword, confirmpassword } = req.body;
+
+    if (!email || !newpassword || !confirmpassword) {
+      return res.status(403).json({
+        status: StatusCodes.FORBIDDEN,
+        message: "All filed required",
+      });
+    } else if (!validatePassword(newpassword)) {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: responsemessage.VALIDATEPASS,
+      });
+    } else {
+      const user = await User.findOne({ where: { email } });
+      if (!user) {
+        return res.status(404).json({
+          status: StatusCodes.NOT_FOUND,
+          message: responsemessage.NOTFOUND,
+        });
+      } else {
+        if (newpassword !== confirmpassword) {
+          return res.status(400).json({
+            status: StatusCodes.BAD_REQUEST,
+            message: "Password not match",
+          });
+        } else if (
+          user.otpExpire <
+          new Date().toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+          })
+        ) {
+          return res.status(400).json({
+            status: StatusCodes.BAD_REQUEST,
+            message: "Otp session time out",
+          });
+        } else {
+          const passwordHash = await passwordencrypt(newpassword);
+
+          const userUpdate = await user.update(
+            {  password: passwordHash },
+            {
+              where: { id: user.id },
+            }
+          );
+          console.log(userUpdate);
+          if (userUpdate[0] === 1) {
+            return res.status(200).json({
+              status: StatusCodes.OK,
+              message: "Password successfully changed",
+            });
+          } else {
+            return res.status(500).json({
+              status: StatusCodes.INTERNAL_SERVER_ERROR,
+              message: "Password update failed",
+            });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responsemessage.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
