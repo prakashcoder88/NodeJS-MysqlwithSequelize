@@ -453,9 +453,9 @@ exports.changePassword = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { email, newpassword, confirmpassword } = req.body;
+    const { newpassword, confirmpassword } = req.body;
 
-    if (!email || !newpassword || !confirmpassword) {
+    if (!newpassword || !confirmpassword) {
       return res.status(403).json({
         status: StatusCodes.FORBIDDEN,
         message: "All filed required",
@@ -519,3 +519,29 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+exports.forgotpassword = async(req,res) =>{
+  try {
+    let {email} = req.body
+
+    const otp = Math.floor(1000 * Math.random() *9000);
+    if(!email){
+      return res.status(400).json({
+        status:StatusCodes.BAD_REQUEST,
+        message:"Enter your email id"
+      })
+    }else{
+      let user = await User.findByPk({email})
+
+      if(!user){
+        return res.status(400).json({
+          status:StatusCodes.BAD_REQUEST,
+          message:"We check your email id not found in our system"
+        })
+      }else{
+        let emailResponse = await sendEmail(user.email )
+      }
+    }
+  } catch (error) {
+    
+  }
+}
