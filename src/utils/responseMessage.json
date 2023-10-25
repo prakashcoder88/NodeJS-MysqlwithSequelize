@@ -11,5 +11,6 @@
     "LOGINSUCCESS":"User logged in successfully",
     "ISACTIVE": "You must verify your account and get activate your account",
     "NOTFOUND":"User not found",
-    "DELETE":"User successfully delete"
+    "DELETE":"User successfully delete",
+    "SERVICE_UNAVAILABLE":"couldn't send email, Please try later"
 }

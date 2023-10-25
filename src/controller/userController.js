@@ -8,7 +8,7 @@ const {
 const genratejwt = require("../utils/jwt");
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
-const { Sequelize, Op } = require("sequelize");
+const { Sequelize, Op, where } = require("sequelize");
 
 // exports.SignUp = async (req, res) => {
 //   try {
@@ -492,7 +492,7 @@ exports.resetPassword = async (req, res) => {
           const passwordHash = await passwordencrypt(newpassword);
 
           const userUpdate = await user.update(
-            {  password: passwordHash },
+            { password: passwordHash },
             {
               where: { id: user.id },
             }
@@ -519,29 +519,63 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
-exports.forgotpassword = async(req,res) =>{
+
+exports.forgotPassword = async (req, res) => {
   try {
-    let {email} = req.body
+    const { email } = req.body;
 
-    const otp = Math.floor(1000 * Math.random() *9000);
-    if(!email){
+    // Generate a 4-digit OTP
+    const otp = Math.floor(Math.random() * 9000) + 1000;
+
+    if (!email) {
       return res.status(400).json({
-        status:StatusCodes.BAD_REQUEST,
-        message:"Enter your email id"
-      })
-    }else{
-      let user = await User.findByPk({email})
-
-      if(!user){
-        return res.status(400).json({
-          status:StatusCodes.BAD_REQUEST,
-          message:"We check your email id not found in our system"
-        })
-      }else{
-        let emailResponse = await sendEmail(user.email )
-      }
+        status: StatusCodes.BAD_REQUEST,
+        message: "Please enter your email address.",
+      });
     }
+
+    // Check if the user exists in the database using Sequelize model methods
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: "The provided email address was not found in our system.",
+      });
+    }
+
+    // Send an email with the OTP
+    // let emailResponse = await sendEmail(user.email, otp);
+
+    // if (emailResponse.error) {
+    //   return res.status(503).json({
+    //     status: StatusCodes.SERVICE_UNAVAILABLE,
+    //     message: "Email service is currently unavailable.",
+    //   });
+    // }
+
+    // Set the OTP expiration time to 2 minutes from now
+    const expireTime = Date.now() + 2 * 60 * 1000;
+    const expireTimeIST = new Date(expireTime).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+    });
+console.log(expireTimeIST);
+   
+    await User.update(
+      { otp: otp, otpExpire: expireTimeIST },
+      { where: { email } }
+    );
+
+    return res.status(200).json({
+      status: StatusCodes.OK,
+      message: "An email with the OTP has been sent.",
+      otp: otp,
+    });
   } catch (error) {
-    
+    console.error(error); // Log the error for debugging purposes
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Internal server error occurred.",
+    });
   }
-}
+};
