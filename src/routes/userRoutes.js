@@ -12,6 +12,7 @@ router.patch("/softdelete", UserToken,Userdata.SoftDelete)
 router.post("/changepassword", UserToken,Userdata.changePassword)
 router.post("/resetpassword", UserToken,Userdata.resetPassword)
 router.post("/forgotpassword", Userdata.forgotPassword)
+router.post("/verifyotp", Userdata.verifyOtp)
 
 
 router.post("/userSignUpOrUpdate", Userdata.userSignUpOrUpdate)

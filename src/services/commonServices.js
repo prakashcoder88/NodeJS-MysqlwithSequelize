@@ -27,4 +27,9 @@ async function passwordencrypt(password) {
     return code;
 }
 
-  module.exports = { referralCode, passwordencrypt, validatePassword };
+function AddMinutesToDate(date, minutes) {
+  // const utcOffsetMinutes = 330;
+  return new Date(date.getTime() + minutes*60000);
+}
+
+  module.exports = { referralCode, passwordencrypt, validatePassword,AddMinutesToDate };

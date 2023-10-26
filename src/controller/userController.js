@@ -8,7 +8,7 @@ const {
 const genratejwt = require("../utils/jwt");
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
-const { Sequelize, Op, where } = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
 
 // exports.SignUp = async (req, res) => {
 //   try {
@@ -519,63 +519,151 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+// exports.forgotPassword = async (req, res) => {
+//   try {
+//     let { email } = req.body;
+
+//     const otp = Math.floor(1000 * Math.random() * 9000);
+//     if (!email) {
+//       return res.status(400).json({
+//         status: StatusCodes.BAD_REQUEST,
+//         message: "Enter your email id",
+//       });
+//     } else {
+//       let user = await User.findByPk({ email });
+
+//       if (!user) {
+//         return res.status(400).json({
+//           status: StatusCodes.BAD_REQUEST,
+//           message: "We check your email id not found in our system",
+//         });
+//       } else {
+//         let emailResponse = await sendEmail(user.email, otp);
+
+//         if (emailResponse.error) {
+//           return res.status(503).json({
+//             status: StatusCodes.SERVICE_UNAVAILABLE,
+//             message: responsemessage.SERVICE_UNAVAILABLE,
+//           });
+//         } else {
+//           let expiretime = Date.now() + 2 * 60 * 1000;
+//           let expiretimeIST = new Date(expiretime).toLocaleString("en-IN", {
+//             timeZone: "Asia/Kolkata",
+//           });
+//           const userOtpExpire = await User.findByIdAndUpdate(
+//             { id: user.id },
+//             { $set: { otp: otp, otpExpire: expiretimeIST } },
+//             { new: true }
+//           );
+//         }
+//       }
+//       return res.status(200).json({
+//         status:StatusCodes.OK,
+//         message: "We send email for otp",
+//         otp:otp
+//       })
+//     }
+//   } catch (error) {
+//     return res.status(500).json({
+//       status: StatusCodes.INTERNAL_SERVER_ERROR,
+//       message: responsemessage.INTERNAL_SERVER_ERROR,
+//     });
+//   }
+// };
+
 
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    let { email } = req.body;
 
-    // Generate a 4-digit OTP
-    const otp = Math.floor(Math.random() * 9000) + 1000;
+    const otp = Math.floor(1000 + Math.random() * 9000); 
 
     if (!email) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: "Please enter your email address.",
+        message: "Enter your email id",
       });
-    }
+    } else {
+      let user = await User.findOne({ where: { email } }); 
 
-    // Check if the user exists in the database using Sequelize model methods
-    const user = await User.findOne({ where: { email } });
+      if (!user) {
+        return res.status(400).json({
+          status: StatusCodes.BAD_REQUEST,
+          message: "Email not found in our system", 
+        });
+      }
+      //  else {
+      //   let emailResponse = await sendEmail(user.email, otp);
 
-    if (!user) {
-      return res.status(400).json({
-        status: StatusCodes.BAD_REQUEST,
-        message: "The provided email address was not found in our system.",
+      //   if (emailResponse.error) {
+      //     return res.status(503).json({
+      //       status: StatusCodes.SERVICE_UNAVAILABLE,
+      //       message: "Email service is unavailable", 
+      //     });
+      //   } 
+        else {
+          let expiretime = Date.now() + 2 * 60 * 1000;
+          let expiretimeIST = new Date(expiretime).toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+          });
+          const userOtpExpire = await User.update(
+            { otp: otp}, //otpExpire: expiretime
+            { where: { id: user.id } }
+          );
+        }
+      }
+      return res.status(200).json({
+        status: StatusCodes.OK,
+        message: "Email sent with OTP",
+        otp: otp,
       });
-    }
-
-    // Send an email with the OTP
-    // let emailResponse = await sendEmail(user.email, otp);
-
-    // if (emailResponse.error) {
-    //   return res.status(503).json({
-    //     status: StatusCodes.SERVICE_UNAVAILABLE,
-    //     message: "Email service is currently unavailable.",
-    //   });
     // }
-
-    // Set the OTP expiration time to 2 minutes from now
-    const expireTime = Date.now() + 2 * 60 * 1000;
-    const expireTimeIST = new Date(expireTime).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-    });
-console.log(expireTimeIST);
-   
-    await User.update(
-      { otp: otp, otpExpire: expireTimeIST },
-      { where: { email } }
-    );
-
-    return res.status(200).json({
-      status: StatusCodes.OK,
-      message: "An email with the OTP has been sent.",
-      otp: otp,
-    });
   } catch (error) {
-    console.error(error); // Log the error for debugging purposes
     return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: "Internal server error occurred.",
+      message: "Internal server error", // Corrected the error message
+    });
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  let { email, otp } = req.body;
+
+  try {
+    const user =
+      (await User.findOne({where:{ email }})) 
+      // (await adminuser.findOne({ empEmail }));
+
+    if (!user) {
+      return res.status(404).json({
+        status: StatusCodes.NOT_FOUND,
+        message: "User not found",
+      });
+    } else if (otp !== user.otp) {
+      return res.status(400).json({
+        statust: StatusCodes.BAD_REQUEST,
+        message: "Otp not match",
+      });
+    } else if (
+      // user.updateAt  <
+      //   Date.now()+ 2 * 60 * 1000
+      user.updatedAt.getTime() + 2 * 60 * 1000 < Date.now()
+    ) {
+      return res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: "Otp time Expired",
+      });
+    } else {
+      return res.status(200).json({
+        status: StatusCodes.OK,
+        message: "Otp successfully verify",
+      });
+    }
+  } catch (error) {
+
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Internal server error",
     });
   }
 };

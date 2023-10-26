@@ -32,10 +32,10 @@ const User = sequelize.define("user", {
     require: false,
   },
   otp: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
   },
   otpExpire:{
-    type:DataTypes.STRING
+    type:DataTypes.DATE
   },
 
   password: {
